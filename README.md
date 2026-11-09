@@ -4,9 +4,9 @@
 
 ## 安装与首次设置
 
-适用 **Apple Silicon Mac、macOS 15 或更新版本**。0.11.0 是分享预览版。
+适用 **Apple Silicon Mac、macOS 15 或更新版本**。0.11.1 是分享预览版。
 
-1. 从 [Releases](https://github.com/WWWXXX222/plaud-enhanced/releases) 下载完整 App，解压后放进「应用程序」或 `~/Applications`。
+1. [直接下载 0.11.1 安装包](https://github.com/WWWXXX222/plaud-enhanced/releases/download/v0.11.1/PlaudEnhanced-0.11.1-arm64.zip)，解压后放进「应用程序」或 `~/Applications`。版本详情见 [发行页](https://github.com/WWWXXX222/plaud-enhanced/releases/tag/v0.11.1)。
 2. 安装 Python 3 和 FFmpeg。已使用 Homebrew 的用户可运行 `brew install python ffmpeg`。
 3. 安装并登录 [Codex CLI](https://developers.openai.com/codex/cli/) 或 [Claude Code](https://code.claude.com/docs/en/setup)。已有 CLI 登录可直接使用。
 4. 打开 App，按首次设置选择分析工具、转写方式和知识库目录，再按需允许麦克风及系统音频权限。也可以先导入已有音频。
@@ -22,7 +22,7 @@
 - 默认：本机双路录音 → WhisperKit 离线转写 → Codex 或 Claude 分析 → 所选知识库。
 - 可选：上传到自己的 Plaud；最终转写可选本机、OpenAI 或 Plaud。
 - 实时字幕默认离线，可以暂停、切换联网字幕、回看最近几分钟。
-- 支持背景、截图粘贴及原图复制、文件附件和文档链接。
+- 支持背景、截图粘贴及原图复制、文件附件和文档链接。截图与文档位于“转写与归档选项”下方，左右并排、独立折叠。
 - “分析与归档”位于第二个标签页。打开已完成分析的会议，默认显示完整 Markdown 结果。
 - 先检索知识库相关历史正文，再按层次分析判断、依据、取舍和建议。新知识库没有历史记录时明确说明。
 - 中英文保留原文；身份不确定的说话人保持待确认。支持会内手动标注姓名，不做自动声纹身份识别。
