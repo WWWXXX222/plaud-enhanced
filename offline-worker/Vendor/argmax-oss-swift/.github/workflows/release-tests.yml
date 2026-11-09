@@ -1,0 +1,46 @@
+name: Release Tests
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+jobs:
+  model-cache:
+    name: "Model Cache"
+    uses: ./.github/workflows/model-cache.yml
+
+  build-and-test-all-platforms:
+    name: "Build and Test All Platforms"
+    needs: [model-cache]
+    strategy:
+      matrix:
+        include:
+          - os: macos-15
+            ios-version: "18.5"
+            ios-device: "iPhone 16"
+            watchos-version: "11.5"
+            visionos-version: "2.5"
+            xcode-version: "16.4"
+          - os: macos-26
+            ios-version: "26.5"
+            ios-device: "iPhone 17"
+            watchos-version: "26.5"
+            visionos-version: "latest"
+            xcode-version: "26.6"
+          - os: xcode-27
+            ios-version: "27.0"
+            ios-device: "iPhone 18 Pro"
+            watchos-version: "27.0"
+            visionos-version: "27.0"
+            xcode-version: "27.0"
+    uses: ./.github/workflows/unit-tests.yml
+    secrets: inherit
+    with:
+      macos-runner: ${{ matrix.os }}
+      ios-version: ${{ matrix.ios-version }}
+      ios-device: ${{ matrix.ios-device }}
+      watchos-version: ${{ matrix.watchos-version }}
+      visionos-version: ${{ matrix.visionos-version }}
+      xcode-version: ${{ matrix.xcode-version }}
+      model-cache-key: ${{ needs.model-cache.outputs.cache-key }}
