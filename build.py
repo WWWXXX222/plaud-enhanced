@@ -7,7 +7,7 @@ CONTENTS=APP/'Contents';MACOS=CONTENTS/'MacOS';RES=CONTENTS/'Resources'
 MACOS.mkdir(parents=True,exist_ok=True);RES.mkdir(exist_ok=True)
 info={'CFBundleExecutable':'MeetingMemory','CFBundleIdentifier':'com.local.meetingmemory.mac',
       'CFBundleName':'Plaud威力加强版','CFBundleDisplayName':'Plaud威力加强版','CFBundlePackageType':'APPL',
-      'CFBundleShortVersionString':'0.11.0','CFBundleVersion':'52','LSMinimumSystemVersion':'15.0',
+      'CFBundleShortVersionString':'0.11.1','CFBundleVersion':'53','LSMinimumSystemVersion':'15.0',
       'CFBundleIconFile':'AppIcon.icns',
       'NSHighResolutionCapable':True,'NSPrincipalClass':'NSApplication',
       'NSMicrophoneUsageDescription':'Plaud威力加强版需要麦克风来录制你的会议发言。录音保存在本机，录完按你的设置自动转写与分析；上传 Plaud 为可选项。',

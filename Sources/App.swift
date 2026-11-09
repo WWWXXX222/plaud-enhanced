@@ -497,6 +497,10 @@ struct MeetingDetail: View {
             }
                 }.disabled(store.locked(id))
             }
+            HStack(alignment: .top, spacing: 12) {
+                screenshotSection.frame(minWidth: 0, maxWidth: .infinity, alignment: .topLeading)
+                documentSection.frame(minWidth: 0, maxWidth: .infinity, alignment: .topLeading)
+            }
             CollapsibleSection("参会人", key: "participants", subtitle: "选填 · 不确定的身份会保留为待确认", initiallyExpanded: true) {
                 TextField("例如：我、张明（产品）、Alex（客户）", text: field(\.participants)).textFieldStyle(.roundedBorder).disabled(store.locked(id))
                 ParticipantNamesView(model: speakers, select: { name in
@@ -507,43 +511,6 @@ struct MeetingDetail: View {
             }
             labeled("会议目的", hint: "选填 · 不填写也会自动分析") { TextEditor(text: field(\.purpose)).scrollContentBackground(.hidden).font(.body).frame(height: 80).padding(8).background(paper).clipShape(RoundedRectangle(cornerRadius: 8)).overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.gray.opacity(0.15))) }
             labeled("我的补充", hint: "选填 · 会后判断、额外背景，或需要特别关注的部分") { TextEditor(text: field(\.notes)).scrollContentBackground(.hidden).font(.body).frame(height: 65).padding(8).overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.gray.opacity(0.15))) }
-            CollapsibleSection("会议截图", key: "screenshots", subtitle: "\(meeting.images.count) / 8 张 · 选填", symbol: "photo", initiallyExpanded: false) {
-                VStack(spacing: 12) {
-                    VStack(spacing: 7) {
-                        Image(systemName: "doc.on.clipboard").font(.system(size: 22))
-                        Text("复制图片后，点击这里按 ⌘V 粘贴").font(.callout)
-                    }.frame(maxWidth: .infinity).contentShape(Rectangle()).onTapGesture { imagePasteFocused = true }
-                    HStack(spacing: 12) {
-                        Button { store.pasteImage(id) } label: { Label("粘贴剪贴板图片", systemImage: "doc.on.clipboard") }
-                        Button { store.addImages(id) } label: { Label("选择图片文件…", systemImage: "folder") }
-                    }
-                    Text("也可复制 Finder 中的 PNG、JPEG 图片文件后粘贴 · 每张不超过 15 MB").font(.caption).foregroundStyle(.secondary)
-                }.disabled(store.locked(id)).padding(18).frame(maxWidth: .infinity).background(paper).clipShape(RoundedRectangle(cornerRadius: 10))
-                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(imagePasteFocused ? ink : hairline, style: StrokeStyle(lineWidth: 1, dash: imagePasteFocused ? [] : [5, 4])))
-                    .focusable(!store.locked(id)).focused($imagePasteFocused).focusEffectDisabled()
-                    .onPasteCommand(of: [.image, .fileURL]) { _ in store.pasteImage(id) }
-                    .accessibilityElement(children: .contain)
-                    .accessibilityLabel("会议截图粘贴区域")
-                    .accessibilityHint("点击后按 Command V 粘贴剪贴板图片，也可使用粘贴或选择文件按钮。")
-                if !meeting.images.isEmpty {
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 130))],alignment: .leading) {
-                        ForEach(meeting.images, id: \.self) { name in
-                            VStack { Button { openScreenshot(name) } label: { if let image = NSImage(contentsOf: store.folder(id).appendingPathComponent(name)) { Image(nsImage: image).resizable().scaledToFit().frame(height: 92) } }.buttonStyle(.plain)
-                                    .help("打开大图，可缩放、复制或查看原图")
-                                    .accessibilityLabel("查看截图：\(name)")
-                                    .contextMenu {
-                                        Button("查看大图") { openScreenshot(name) }
-                                        Button("复制图片") { copyScreenshot(name) }
-                                        Button("打开原图") { NSWorkspace.shared.open(store.folder(id).appendingPathComponent(name)) }
-                                    }
-                                Button("复制图片") { copyScreenshot(name) }.font(.caption).buttonStyle(MonochromeLinkStyle())
-                                if !store.locked(id) { Button("移除") { store.edit(id) { $0.images.removeAll {$0 == name} } }.font(.caption).buttonStyle(MonochromeLinkStyle()) }
-                            }.padding(8).background(paper).clipShape(RoundedRectangle(cornerRadius: 8))
-                        }
-                    }
-                }
-            }
-            documentSection
             if meeting.cloud_upload != true, let s = store.statuses[id], s.state == "error" { HStack { Text(s.message).foregroundStyle(ink); Spacer(); Button(meeting.isPlaud ? "重试同步" : "重试转写") { store.transcribe(id) } }.font(.callout) }
             if !meeting.usesPlaud, meeting.capture_state == "captured", store.statuses[id] == nil { Button("开始转写") { store.transcribe(id) }.buttonStyle(MonochromeSecondaryStyle()) }
             HStack {
@@ -557,6 +524,53 @@ struct MeetingDetail: View {
             }.padding(.top, 12)
         }
     }
+    @ViewBuilder var screenshotActions: some View {
+        Button { store.pasteImage(id) } label: { Label("粘贴剪贴板图片", systemImage: "doc.on.clipboard") }
+        Button { store.addImages(id) } label: { Label("选择图片文件…", systemImage: "folder") }
+    }
+    @ViewBuilder var documentActions: some View {
+        Button { store.pasteDocuments(id) } label: { Label("粘贴文档或链接", systemImage: "doc.on.clipboard") }
+        Button { store.addDocuments(id) } label: { Label("选择文档文件…", systemImage: "folder") }
+        Button { addingDocumentLink = true } label: { Label("添加链接…", systemImage: "link") }
+    }
+    var screenshotSection: some View {
+        CollapsibleSection("会议截图", key: "screenshots", subtitle: "\(meeting.images.count) / 8 张 · 选填", symbol: "photo", initiallyExpanded: false) {
+            VStack(spacing: 12) {
+                VStack(spacing: 7) {
+                    Image(systemName: "doc.on.clipboard").font(.system(size: 22))
+                    Text("复制图片后，点击这里按 ⌘V 粘贴").font(.callout)
+                }.frame(maxWidth: .infinity).contentShape(Rectangle()).onTapGesture { imagePasteFocused = true }
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 12) { screenshotActions }.fixedSize(horizontal: true, vertical: false)
+                    VStack(spacing: 8) { screenshotActions }
+                }
+                Text("也可复制 Finder 中的 PNG、JPEG 图片文件后粘贴 · 每张不超过 15 MB").font(.caption).foregroundStyle(.secondary)
+            }.disabled(store.locked(id)).padding(18).frame(maxWidth: .infinity).background(paper).clipShape(RoundedRectangle(cornerRadius: 10))
+                .overlay(RoundedRectangle(cornerRadius: 10).stroke(imagePasteFocused ? ink : hairline, style: StrokeStyle(lineWidth: 1, dash: imagePasteFocused ? [] : [5, 4])))
+                .focusable(!store.locked(id)).focused($imagePasteFocused).focusEffectDisabled()
+                .onPasteCommand(of: [.image, .fileURL]) { _ in store.pasteImage(id) }
+                .accessibilityElement(children: .contain)
+                .accessibilityLabel("会议截图粘贴区域")
+                .accessibilityHint("点击后按 Command V 粘贴剪贴板图片，也可使用粘贴或选择文件按钮。")
+            if !meeting.images.isEmpty {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 130))],alignment: .leading) {
+                    ForEach(meeting.images, id: \.self) { name in
+                        VStack { Button { openScreenshot(name) } label: { if let image = NSImage(contentsOf: store.folder(id).appendingPathComponent(name)) { Image(nsImage: image).resizable().scaledToFit().frame(height: 92) } }.buttonStyle(.plain)
+                                .help("打开大图，可缩放、复制或查看原图")
+                                .accessibilityLabel("查看截图：\(name)")
+                                .contextMenu {
+                                    Button("查看大图") { openScreenshot(name) }
+                                    Button("复制图片") { copyScreenshot(name) }
+                                    Button("打开原图") { NSWorkspace.shared.open(store.folder(id).appendingPathComponent(name)) }
+                                }
+                            Button("复制图片") { copyScreenshot(name) }.font(.caption).buttonStyle(MonochromeLinkStyle())
+                            if !store.locked(id) { Button("移除") { store.edit(id) { $0.images.removeAll {$0 == name} } }.font(.caption).buttonStyle(MonochromeLinkStyle()) }
+                        }.padding(8).background(paper).clipShape(RoundedRectangle(cornerRadius: 8))
+                    }
+                }
+            }
+        }
+    }
     var documentSection: some View {
         CollapsibleSection("会议文档", key: "documents", subtitle: "\((meeting.documents ?? []).count) / 10 份 · 选填", symbol: "paperclip", initiallyExpanded: false) {
             VStack(alignment: .leading, spacing: 12) {
@@ -564,10 +578,9 @@ struct MeetingDetail: View {
                     Text("复制文档或链接后，点击这里按 ⌘V 粘贴").font(.callout)
                         .frame(maxWidth: .infinity).contentShape(Rectangle())
                         .onTapGesture { documentPasteFocused = true }
-                    HStack(spacing: 12) {
-                        Button { store.pasteDocuments(id) } label: { Label("粘贴文档或链接", systemImage: "doc.on.clipboard") }
-                        Button { store.addDocuments(id) } label: { Label("选择文档文件…", systemImage: "folder") }
-                        Button { addingDocumentLink = true } label: { Label("添加链接…", systemImage: "link") }
+                    ViewThatFits(in: .horizontal) {
+                        HStack(spacing: 12) { documentActions }.fixedSize(horizontal: true, vertical: false)
+                        VStack(spacing: 8) { documentActions }
                     }
                 }.disabled(store.locked(id) || store.documentImports.contains(id))
                     .padding(16).frame(maxWidth: .infinity).background(paper).clipShape(RoundedRectangle(cornerRadius: 10))
